@@ -120,51 +120,94 @@
 #     desired = enc_sample[i]
 #     print(tokenizer.decode(context), "---->", tokenizer.decode([desired]))
 
-from dataset import create_dataloader_v1
+# from dataset import create_dataloader_v1
 
-with open("the-verdict.txt", "r", encoding="utf-8") as f:
-    raw_text = f.read()
+# with open("the-verdict.txt", "r", encoding="utf-8") as f:
+#     raw_text = f.read()
 
-dataloader = create_dataloader_v1(
-    raw_text, batch_size=8, max_length=4, stride=4, shuffle=False)
-data_iter = iter(dataloader)
-first_batch = next(data_iter)
-print(first_batch)
+# dataloader = create_dataloader_v1(
+#     raw_text, batch_size=8, max_length=4, stride=4, shuffle=False)
+# data_iter = iter(dataloader)
+# first_batch = next(data_iter)
+# print(first_batch)
 
 
-import torch 
+# import torch 
 
-input_ids = torch.tensor([2, 3, 5, 1])
-vocab_size = 6
-output_dim = 3
+# input_ids = torch.tensor([2, 3, 5, 1])
+# vocab_size = 6
+# output_dim = 3
 
-torch.manual_seed(123)
+# torch.manual_seed(123)
 
-embedding_layer = torch.nn.Embedding(vocab_size, output_dim)
-print(embedding_layer.weight)
+# embedding_layer = torch.nn.Embedding(vocab_size, output_dim)
+# print(embedding_layer.weight)
 
-print(embedding_layer(torch.tensor([3])))
+# print(embedding_layer(torch.tensor([3])))
 
-print(embedding_layer(input_ids))
+# print(embedding_layer(input_ids))
 
-vocab_size = 50257
-output_dim = 256
-token_embedding_layer = torch.nn.Embedding(vocab_size, output_dim)
+# vocab_size = 50257
+# output_dim = 256
+# token_embedding_layer = torch.nn.Embedding(vocab_size, output_dim)
 
-max_length = 4
-dataloader = create_dataloader_v1(raw_text, batch_size=8, max_length=max_length, stride=max_length, shuffle=False)
-data_iter = iter(dataloader)
-inputs, targets = next(data_iter)
-print("Token IDs:\n", inputs)
-print("\nInputs shape:\n", inputs.shape)
+# max_length = 4
+# dataloader = create_dataloader_v1(raw_text, batch_size=8, max_length=max_length, stride=max_length, shuffle=False)
+# data_iter = iter(dataloader)
+# inputs, targets = next(data_iter)
+# print("Token IDs:\n", inputs)
+# print("\nInputs shape:\n", inputs.shape)
 
-token_embeddings = token_embedding_layer(inputs)
-print(token_embeddings.shape)
+# token_embeddings = token_embedding_layer(inputs)
+# print(token_embeddings.shape)
 
-context_length = max_length
-pos_embedding_layer = torch.nn.Embedding(context_length, output_dim)
-pos_embeddings = pos_embedding_layer(torch.arange(context_length))
-print(pos_embeddings.shape)
+# context_length = max_length
+# pos_embedding_layer = torch.nn.Embedding(context_length, output_dim)
+# pos_embeddings = pos_embedding_layer(torch.arange(context_length))
+# print(pos_embeddings.shape)
 
-input_embeddings = token_embeddings + pos_embeddings
-print(input_embeddings.shape)
+# input_embeddings = token_embeddings + pos_embeddings
+# print(input_embeddings.shape)
+
+
+
+
+# Chapter 3
+
+import torch
+
+inputs = torch.tensor(
+  [[0.43, 0.15, 0.89], # Your     
+   [0.55, 0.87, 0.66], # journey
+   [0.57, 0.85, 0.64], # starts
+   [0.22, 0.58, 0.33], # with
+   [0.77, 0.25, 0.10], # one
+   [0.05, 0.80, 0.55]] # step
+)
+
+query = inputs[1]
+attn_scores_2 = torch.empty(inputs.shape[0])
+for i, x_i in enumerate(inputs):
+    attn_scores_2[i] = torch.dot(x_i, query)
+print(attn_scores_2)
+
+attn_weights_2_tmp = attn_scores_2 / attn_scores_2.sum()
+print("Attention weights:", attn_weights_2_tmp)
+print("Sum:", attn_weights_2_tmp.sum())
+
+def softmax_naive(x):
+    return torch.exp(x) / torch.exp(x).sum(dim=0)
+
+attn_weights_2_naive = softmax_naive(attn_scores_2)
+print("Attention weights:", attn_weights_2_naive)
+print("Sum:", attn_weights_2_naive.sum())
+
+attn_weights_2 = torch.softmax(attn_scores_2, dim=0)
+print("Attention weights:", attn_weights_2)
+print("Sum:", attn_weights_2.sum())
+
+query = inputs[1]
+context_vec_2 = torch.zeros(query.shape)
+for i, x_i in enumerate(inputs):
+    context_vec_2 += attn_weights_2[i] * x_i
+print(context_vec_2)
